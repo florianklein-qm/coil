@@ -34,7 +34,7 @@ class NetworkFetcher(
     private val options: Options,
     private val networkClient: Lazy<NetworkClient>,
     private val diskCache: Lazy<DiskCache?>,
-    private val cacheStrategy: Lazy<CacheStrategy>,
+    private val cacheStrategy: Lazy<(String) -> CacheStrategy>,
     private val connectivityChecker: Lazy<ConnectivityChecker>,
     private val concurrentRequestStrategy: Lazy<ConcurrentRequestStrategy>,
 ) : Fetcher {
@@ -45,7 +45,7 @@ class NetworkFetcher(
         options: Options,
         networkClient: Lazy<NetworkClient>,
         diskCache: Lazy<DiskCache?>,
-        cacheStrategy: Lazy<CacheStrategy>,
+        cacheStrategy: Lazy<(String) -> CacheStrategy>,
         connectivityChecker: ConnectivityChecker,
     ) : this(
         url = url,
@@ -83,7 +83,7 @@ class NetworkFetcher(
                 if (cacheResponse != null) {
                     throwIfFailureResponseCode(cacheResponse)
 
-                    readResult = cacheStrategy.value.read(cacheResponse, newRequest(), options)
+                    readResult = cacheStrategy.value.invoke(url).read(cacheResponse, newRequest(), options)
                     if (readResult.response != null) {
                         return SourceFetchResult(
                             source = snapshot.toImageSource(),
@@ -178,7 +178,7 @@ class NetworkFetcher(
             return null
         }
 
-        val writeResult = cacheStrategy.value.write(cacheResponse, networkRequest, networkResponse, options)
+        val writeResult = cacheStrategy.value.invoke(url).write(cacheResponse, networkRequest, networkResponse, options)
         val modifiedNetworkResponse = writeResult.response ?: return null
 
         // Open a new editor. Return null if we're unable to write to this entry.
@@ -286,7 +286,7 @@ class NetworkFetcher(
 
     class Factory(
         networkClient: () -> NetworkClient,
-        cacheStrategy: () -> CacheStrategy = { CacheStrategy.DEFAULT },
+        cacheStrategy: (String) -> CacheStrategy = { CacheStrategy.DEFAULT },
         connectivityChecker: (PlatformContext) -> ConnectivityChecker = ::ConnectivityChecker,
         concurrentRequestStrategy: () -> ConcurrentRequestStrategy = { ConcurrentRequestStrategy.UNCOORDINATED },
     ) : Fetcher.Factory<Uri> {
@@ -294,7 +294,7 @@ class NetworkFetcher(
         @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
         constructor(
             networkClient: () -> NetworkClient,
-            cacheStrategy: () -> CacheStrategy = { CacheStrategy.DEFAULT },
+            cacheStrategy: (String) -> CacheStrategy = { CacheStrategy.DEFAULT },
             connectivityChecker: (PlatformContext) -> ConnectivityChecker = ::ConnectivityChecker,
         ) : this(
             networkClient = networkClient,
@@ -304,7 +304,7 @@ class NetworkFetcher(
         )
 
         private val networkClientLazy = lazy(networkClient)
-        private val cacheStrategyLazy = lazy(cacheStrategy)
+        private val cacheStrategyLazy: Lazy<(String) -> CacheStrategy> = lazy({ cacheStrategy })
         private val connectivityCheckerLazy = singleParameterLazy(connectivityChecker)
         private val concurrentRequestStrategyLazy = lazy(concurrentRequestStrategy)
 

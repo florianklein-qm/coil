@@ -34,7 +34,7 @@ fun OkHttpNetworkFetcherFactory(
 @JvmName("factory")
 fun OkHttpNetworkFetcherFactory(
     callFactory: () -> Call.Factory = ::OkHttpClient,
-    cacheStrategy: () -> CacheStrategy = { CacheStrategy.DEFAULT },
+    cacheStrategy: (String) -> CacheStrategy = { CacheStrategy.DEFAULT },
 ) = NetworkFetcher.Factory(
     networkClient = { callFactory().asNetworkClient() },
     cacheStrategy = cacheStrategy,
@@ -44,7 +44,7 @@ fun OkHttpNetworkFetcherFactory(
 @Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
 fun OkHttpNetworkFetcherFactory(
     callFactory: () -> Call.Factory = ::OkHttpClient,
-    cacheStrategy: () -> CacheStrategy = { CacheStrategy.DEFAULT },
+    cacheStrategy: (String) -> CacheStrategy = { CacheStrategy.DEFAULT },
     connectivityChecker: (PlatformContext) -> ConnectivityChecker = ::ConnectivityChecker,
 ) = NetworkFetcher.Factory(
     networkClient = { callFactory().asNetworkClient() },
@@ -55,7 +55,7 @@ fun OkHttpNetworkFetcherFactory(
 @JvmName("factory")
 fun OkHttpNetworkFetcherFactory(
     callFactory: () -> Call.Factory = ::OkHttpClient,
-    cacheStrategy: () -> CacheStrategy = { CacheStrategy.DEFAULT },
+    cacheStrategy: (String) -> CacheStrategy = { CacheStrategy.DEFAULT },
     connectivityChecker: (PlatformContext) -> ConnectivityChecker = ::ConnectivityChecker,
     concurrentRequestStrategy: () -> ConcurrentRequestStrategy = { ConcurrentRequestStrategy.UNCOORDINATED },
 ) = NetworkFetcher.Factory(
